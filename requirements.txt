@@ -1,5 +1,5 @@
-numpy=2.4.1
-fastapi=0.117.1
-uvicorn=0.40.0
-pydantic=2.12.5
-onnxruntime=1.26.0
+numpy==2.4.1
+fastapi==0.117.1
+uvicorn==0.40.0
+pydantic==2.12.5
+onnxruntime==1.26.0
