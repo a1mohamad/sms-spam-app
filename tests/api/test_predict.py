@@ -23,7 +23,7 @@ def test_predict_return_prediction_contract(
 
 def test_predict_rejects_empty_text(api_client: TestClient) -> None:
     response = api_client.post(
-        "/predcit",
+        "/predict",
         json={"text": ""},
     )
 
