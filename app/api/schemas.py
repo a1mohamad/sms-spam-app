@@ -1,12 +1,19 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
+
+SmsText = Annotated[
+    str,
+    StringConstraints(
+        strip_whitespace=True,
+        min_length=1,
+    )
+]
 
 
 class PredictRequest(BaseModel):
-    text: str = Field(
+    text: SmsText = Field(
         ...,
-        min_length=1,
         description="SMS text to classify.",
     )
 
