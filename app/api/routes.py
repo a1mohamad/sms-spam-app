@@ -18,6 +18,7 @@ def root() -> dict[str, str]:
         "name": "SMS Spam Classifier",
         "version": "1.0.0",
         "docs": "/docs",
+        "openapi": "/openapi.json",
     }
 
 
