@@ -9,7 +9,7 @@ def test_app_serves_prediction_with_real_artifacts() -> None:
     with TestClient(app) as client:
         response = client.post(
             "/predict",
-            json={"text": "Congratualtions you won a free prize"},
+            json={"text": "Congratulations you won a free prize"},
         )
 
     assert response.status_code == 200
