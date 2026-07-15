@@ -69,3 +69,33 @@ def api_client(
         # Exclude the prediction performed during application warmup.
         mock_predictor.predict.reset_mock()
         yield client
+
+
+@pytest.fixture
+def error_api_client(
+    monkeypatch: pytest.MonkeyPatch,
+    mock_predictor: Mock,
+) -> Iterator[TestClient]:
+    """Create an API client that exposes handled server error responses.
+
+    Args:
+        monkeypatch: Pytest fixture for replacing the predictor factory.
+        mock_predictor: Mocked predictor configured by each error test.
+
+    Yields:
+        Test client that returns HTTP 500 responses instead of re-raising
+        unexpected server exceptions in the test process.
+    """
+    monkeypatch.setattr(
+        main_module,
+        "create_predictor",
+        lambda: mock_predictor,
+    )
+
+    with TestClient(
+        main_module.app,
+        raise_server_exceptions=False,
+    ) as client:
+        # Tests configure failures after the successful startup warmup.
+        mock_predictor.predict.reset_mock()
+        yield client
