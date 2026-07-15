@@ -4,6 +4,7 @@ import numpy as np
 import onnxruntime as ort
 
 from app.core.config import AppConfig
+from app.core.errors import PredictionError
 from app.ml.preprocessing import Preprocessor
 from app.utils.artifact_io import open_json_file
 
@@ -54,7 +55,12 @@ class SpamPredictor:
         """
         token_ids = self.preprocessor.tokenize(text)
 
-        outputs = self.session.run(None, {self.input_name: token_ids})
+        # Treat failures from the external ONNX runtime as a known service
+        # failure so the API can return a safe, retryable response.
+        try:
+            outputs = self.session.run(None, {self.input_name: token_ids})
+        except Exception as exc:
+            raise PredictionError("ONNX inference failed") from exc
 
         # ONNX returns a batched array such as [[0.63]]; flatten it to one score.
         spam_prob = float(np.ravel(outputs[0])[0])
