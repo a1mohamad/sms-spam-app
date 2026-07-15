@@ -1,0 +1,44 @@
+from unittest.mock import Mock
+from uuid import UUID
+
+from fastapi.testclient import TestClient
+
+from app.core.errors import PredictionError
+
+
+def test_prediction_failure_returns_safe_retryable_error(
+    error_api_client: TestClient,
+    mock_predictor: Mock,
+) -> None:
+    mock_predictor.predict.side_effect = PredictionError(
+        "sensitive runtime details"
+    )
+
+    response = error_api_client.post("/predict", json={"text": "hello"})
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "prediction_unavailable"
+    assert "sensitive" not in response.text
+    assert response.json()["error"]["request_id"] == response.headers["x-request-id"]
+
+
+def test_unexpected_failure_returns_generic_error(
+    error_api_client: TestClient,
+    mock_predictor: Mock,
+) -> None:
+    mock_predictor.predict.side_effect = RuntimeError(
+        "database password must not leak"
+    )
+
+    response = error_api_client.post("/predict", json={"text": "hello"})
+
+    assert response.status_code == 500
+    assert response.json()["error"]["code"] == "internal_error"
+    assert "password" not in response.text
+    assert response.json()["error"]["request_id"] == response.headers["x-request-id"]
+
+
+def test_successful_response_has_valid_request_id(api_client) -> None:
+    response = api_client.get("/health")
+
+    UUID(response.headers["x-request-id"])
