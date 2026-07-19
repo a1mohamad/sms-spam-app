@@ -1,6 +1,15 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
+# Load local development settings before AppConfig evaluates os.getenv calls.
+# Existing process variables take precedence, as they should in deployment.
+load_dotenv(dotenv_path=PROJECT_ROOT / ".env", override=False)
+
 
 class AppConfig:
     """Application configuration for training, artifacts, and inference.
@@ -15,7 +24,7 @@ class AppConfig:
     SEED: int = 28
 
     # Project paths.
-    BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
+    BASE_DIR: Path = PROJECT_ROOT
     ARTIFACTS_DIR: Path = Path(
         os.getenv("ARTIFACTS_DIR", BASE_DIR / "artifacts")
     )
