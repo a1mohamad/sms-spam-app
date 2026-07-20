@@ -4,3 +4,6 @@ uvicorn==0.40.0
 pydantic==2.12.5
 onnxruntime==1.26.0
 python-dotenv==1.2.1
+sqlalchemy==2.0.46
+alembic==1.18.4
+psycopg[binary]==3.3.4
