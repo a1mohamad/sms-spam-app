@@ -21,6 +21,7 @@ jobs:
       POSTGRES_USER: sms_spam_test
       POSTGRES_PASSWORD: test_password
       DATABASE_URL: postgresql+psycopg://sms_spam_test:test_password@localhost:5432/sms_spam_test
+      MESSAGE_ENCRYPTION_KEY: ${{ secrets.MESSAGE_ENCRYPTION_KEY }}
 
     services:
       postgres:
