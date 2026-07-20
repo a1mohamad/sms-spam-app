@@ -8,3 +8,6 @@ class MessageEncryptionError(Exception):
 
 class MessageDecryptionError(Exception):
     """Raised when an encrypted SMS message cannot be decrypted."""
+
+class PersistenceError(Exception):
+    """Raised when application data cannot be persisted or retrieved."""
