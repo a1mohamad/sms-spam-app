@@ -1,4 +1,5 @@
 from typing import Literal
+from uuid import UUID
 
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
@@ -10,7 +11,7 @@ from app.security.message_cipher import MessageCipher
 
 
 class PredictionService:
-    """Coordinate encryption and prediction persistence."""
+    """Coordinate encrypted prediction persistence and transactions."""
 
     def __init__(
         self,
@@ -33,6 +34,7 @@ class PredictionService:
     def save_prediction(
         self,
         *,
+        request_id: UUID,
         message: str,
         label: Literal["ham", "spam"],
         spam_probability: float,
@@ -41,6 +43,7 @@ class PredictionService:
         """Encrypt and permanently save a prediction.
 
         Args:
+            request_id: Correlation ID assigned to the API request.
             message: Plaintext SMS message.
             label: Predicted classification label.
             spam_probability: Model probability for the spam class.
@@ -59,6 +62,7 @@ class PredictionService:
 
         try:
             prediction = self._repository.create(
+                request_id=request_id,
                 message_ciphertext=ciphertext,
                 label=label,
                 spam_probability=spam_probability,
@@ -79,5 +83,5 @@ class PredictionService:
             raise PersistenceError(
                 "Prediction transaction failed."
             ) from exc
-        
+
         return prediction
