@@ -1,4 +1,6 @@
 from datetime import datetime
+from uuid import UUID
+
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
@@ -6,17 +8,25 @@ from sqlalchemy import (
     Integer,
     LargeBinary,
     String,
+    UniqueConstraint,
+    Uuid,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
+
 from app.db.base import Base
 
 
 class Prediction(Base):
-    """Represent a stored SMS classification result."""
+    """Represent an encrypted SMS prediction and its request metadata."""
+
     __tablename__ = "predictions"
 
     __table_args__ = (
+        UniqueConstraint(
+            "request_id",
+            name="uq_predictions_request_id",
+        ),
         CheckConstraint(
             "label IN ('ham', 'spam')",
             name="ck_predictions_label",
@@ -40,8 +50,15 @@ class Prediction(Base):
         primary_key=True,
     )
 
+    # Correlate this row with the API response header and server logs.
+    request_id: Mapped[UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        nullable=False,
+    )
+
+    # Fernet ciphertext is stored; plaintext never reaches PostgreSQL.
     message_ciphertext: Mapped[bytes] = mapped_column(
-        LargeBinary, 
+        LargeBinary,
         nullable=False,
     )
 
