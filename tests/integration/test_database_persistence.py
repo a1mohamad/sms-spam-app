@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from uuid import uuid4
 
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
@@ -62,6 +63,7 @@ def test_database_is_at_alembic_head_with_expected_schema(
 
     assert set(columns) == {
         "id",
+        "request_id",
         "message_ciphertext",
         "label",
         "spam_probability",
@@ -70,6 +72,7 @@ def test_database_is_at_alembic_head_with_expected_schema(
         "created_at",
     }
     assert all(not column["nullable"] for column in columns.values())
+    assert str(columns["request_id"]["type"]) == "UUID"
     assert str(columns["message_ciphertext"]["type"]) == "BYTEA"
     assert columns["created_at"]["default"] is not None
     assert inspector.get_pk_constraint("predictions")[
@@ -84,6 +87,10 @@ def test_database_is_at_alembic_head_with_expected_schema(
         "ck_predictions_spam_probability",
         "ck_predictions_threshold",
     }
+    assert {
+        constraint["name"]
+        for constraint in inspector.get_unique_constraints("predictions")
+    } == {"uq_predictions_request_id"}
 
 
 def test_repository_round_trip_uses_ciphertext_and_rolls_back(
@@ -92,8 +99,10 @@ def test_repository_round_trip_uses_ciphertext_and_rolls_back(
     message = "Claim your prize – پاسخ دهید"
     cipher = MessageCipher(Fernet.generate_key().decode("utf-8"))
     repository = PredictionRepository(database_session)
+    request_id = uuid4()
 
     created = repository.create(
+        request_id=request_id,
         message_ciphertext=cipher.encrypt(message),
         label="spam",
         spam_probability=0.91,
@@ -103,6 +112,7 @@ def test_repository_round_trip_uses_ciphertext_and_rolls_back(
 
     prediction_id = created.id
     assert prediction_id is not None
+    assert created.request_id == request_id
     assert created.created_at is not None
     assert created.message_ciphertext != message.encode("utf-8")
 
@@ -110,12 +120,14 @@ def test_repository_round_trip_uses_ciphertext_and_rolls_back(
     retrieved = repository.get_by_id(prediction_id)
 
     assert retrieved is not None
+    assert repository.get_by_request_id(request_id) is retrieved
     assert retrieved.label == "spam"
     assert retrieved.spam_probability == pytest.approx(0.91)
     assert cipher.decrypt(retrieved.message_ciphertext) == message
 
     database_session.rollback()
     assert repository.get_by_id(prediction_id) is None
+    assert repository.get_by_request_id(request_id) is None
 
 
 def test_prediction_service_commits_encrypted_record(
@@ -123,6 +135,7 @@ def test_prediction_service_commits_encrypted_record(
 ) -> None:
     message = "Service integration test – محرمانه"
     cipher = MessageCipher(Fernet.generate_key().decode("utf-8"))
+    request_id = uuid4()
     prediction_id: int | None = None
 
     try:
@@ -134,6 +147,7 @@ def test_prediction_service_commits_encrypted_record(
             )
 
             created = service.save_prediction(
+                request_id=request_id,
                 message=message,
                 label="ham",
                 spam_probability=0.08,
@@ -146,6 +160,7 @@ def test_prediction_service_commits_encrypted_record(
             stored = verification_session.get(Prediction, prediction_id)
 
             assert stored is not None
+            assert stored.request_id == request_id
             assert stored.label == "ham"
             assert stored.spam_probability == pytest.approx(0.08)
             assert stored.threshold == pytest.approx(0.5)
@@ -176,6 +191,7 @@ def test_repository_translates_database_constraint_failures(
     invalid_values: dict[str, str | float | int],
 ) -> None:
     values = {
+        "request_id": uuid4(),
         "message_ciphertext": b"encrypted-message",
         "label": "ham",
         "spam_probability": 0.1,
@@ -184,6 +200,28 @@ def test_repository_translates_database_constraint_failures(
     }
     values.update(invalid_values)
     repository = PredictionRepository(database_session)
+
+    with pytest.raises(PersistenceError):
+        repository.create(**values)
+
+    database_session.rollback()
+
+
+def test_repository_rejects_duplicate_request_id(
+    database_session: Session,
+) -> None:
+    request_id = uuid4()
+    repository = PredictionRepository(database_session)
+    values = {
+        "request_id": request_id,
+        "message_ciphertext": b"encrypted-message",
+        "label": "ham",
+        "spam_probability": 0.1,
+        "threshold": 0.5,
+        "message_length": 12,
+    }
+
+    repository.create(**values)
 
     with pytest.raises(PersistenceError):
         repository.create(**values)
