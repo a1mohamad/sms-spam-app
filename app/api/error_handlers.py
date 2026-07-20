@@ -6,7 +6,7 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.core.errors import PredictionError
+from app.core.errors import PersistenceError, PredictionError
 
 
 logger = logging.getLogger(__name__)
@@ -74,6 +74,35 @@ async def prediction_error_handler(
     )
 
 
+async def persistence_error_handler(
+    request: Request,
+    exc: PersistenceError,
+) -> JSONResponse:
+    """Handle a known prediction-storage failure.
+
+    Args:
+        request: Request being processed when persistence failed.
+        exc: Application-level persistence exception to log.
+
+    Returns:
+        Retryable HTTP 503 response without database details.
+    """
+    logger.error(
+        "Prediction persistence failed",
+        exc_info=(type(exc), exc, exc.__traceback__),
+        extra={"request_id": request.state.request_id},
+    )
+    return _error_response(
+        request,
+        status_code=503,
+        code="persistence_unavailable",
+        message=(
+            "Prediction storage is temporarily unavailable. "
+            "Please try again."
+        ),
+    )
+
+
 async def unexpected_error_handler(
     request: Request,
     exc: Exception,
@@ -110,4 +139,5 @@ def register_error_handlers(app: FastAPI) -> None:
     """
     # FastAPI selects the specific handler before falling back to Exception.
     app.add_exception_handler(PredictionError, prediction_error_handler)
+    app.add_exception_handler(PersistenceError, persistence_error_handler)
     app.add_exception_handler(Exception, unexpected_error_handler)
