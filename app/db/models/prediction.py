@@ -22,7 +22,7 @@ class Prediction(Base):
     __table_args__ = (
         CheckConstraint(
             "label IN ('ham', 'spam')",
-            name="ck_predictions_name",
+            name="ck_predictions_label",
         ),
         CheckConstraint(
             "spam_probability BETWEEN 0 AND 1",
