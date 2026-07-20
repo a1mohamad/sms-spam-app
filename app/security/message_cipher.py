@@ -1,6 +1,6 @@
 from cryptography.fernet import Fernet, InvalidToken
 
-from core.errors import (
+from app.core.errors import (
     MessageDecryptionError,
     MessageEncryptionError,
 )
