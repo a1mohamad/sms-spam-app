@@ -75,7 +75,7 @@ class AppConfig:
         if database_url.startswith("postgres://"):
             return database_url.replace(
                 "postgres://",
-                "postgres+psycopg://",
+                "postgresql+psycopg://",
                 1,
             )
         if database_url.startswith("postgresql://"):
