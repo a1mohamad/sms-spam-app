@@ -53,3 +53,36 @@ class AppConfig:
     # Runtime inference settings.
     MAX_LENGTH: int = int(os.getenv("MAX_LENGTH", "100"))
     THRESHOLD: float = float(os.getenv("THRESHOLD", "0.5"))
+
+
+    @staticmethod
+    def get_database_url() -> str:
+        """Load and normalize the database connection URL.
+
+        Returns:
+            str: A SQLAlchemy URL configured for Psycopg 3.
+
+        Raises:
+            RuntimeError: If DATABASE_URL is missing.
+        """
+
+        database_url = os.getenv("DATABASE_URL")
+        if not database_url:
+            raise RuntimeError(
+                "DATABASE_URL environment variable is required."
+            )
+        
+        if database_url.startswith("postgres://"):
+            return database_url.replace(
+                "postgres://",
+                "postgres+psycopg://",
+                1,
+            )
+        if database_url.startswith("postgresql://"):
+            return database_url.replace(
+                "postgresql://",
+                "postgresql+psycopg://",
+                1,
+            )
+        
+        return database_url
