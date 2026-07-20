@@ -57,7 +57,7 @@ class PredictionRepository:
             self._session.flush()
         except SQLAlchemyError as exc:
             raise PersistenceError(
-                "Prediction persistance failed."
+                "Prediction persistence failed."
             ) from exc
         
         return prediction
