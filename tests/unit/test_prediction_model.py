@@ -8,6 +8,7 @@ def test_prediction_model_registers_expected_schema() -> None:
     assert table.metadata is Base.metadata
     assert set(table.columns.keys()) == {
         "id",
+        "request_id",
         "message_ciphertext",
         "label",
         "spam_probability",
@@ -26,4 +27,5 @@ def test_prediction_model_registers_expected_schema() -> None:
         "ck_predictions_message_length",
         "ck_predictions_spam_probability",
         "ck_predictions_threshold",
+        "uq_predictions_request_id",
     }
