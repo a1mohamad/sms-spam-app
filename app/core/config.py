@@ -1,3 +1,5 @@
+"""Application configuration for training, artifacts, inference, and database access."""
+
 import os
 from pathlib import Path
 
@@ -66,7 +68,7 @@ class AppConfig:
             RuntimeError: If DATABASE_URL is missing.
         """
 
-        database_url = os.getenv("DATABASE_URL")
+        database_url = os.getenv("DATABASE_URL", "")
         if not database_url:
             raise RuntimeError(
                 "DATABASE_URL environment variable is required."
