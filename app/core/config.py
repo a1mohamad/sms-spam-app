@@ -88,3 +88,22 @@ class AppConfig:
             )
         
         return database_url
+    
+    @staticmethod
+    def get_message_encrypted() -> str:
+        """Load the message-encryption key.
+
+        Returns:
+            str: URL-safe base64-encoded Fernet key.
+
+        Raises:
+            RuntimeError: If MESSAGE_ENCRYPTION_KEY is missing.
+        """
+        encryption_key = os.getenv("MESSAGE_ENCRYPTION_KEY", "").strip()
+
+        if not encryption_key:
+            raise RuntimeError(
+                "MESSAGE_ENCRYPTION_KEY variable is required."
+            )
+        
+        return encryption_key
