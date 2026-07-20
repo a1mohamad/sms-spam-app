@@ -19,6 +19,7 @@ class Database:
             database_url,
             # Detect connections that became invalid while inside the pool.
             pool_pre_ping=True,
+            hide_parameters=True,
         )
 
         self._session_factory: sessionmaker[Session] = sessionmaker(
