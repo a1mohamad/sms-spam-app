@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from app.core.config import AppConfig
 
 
@@ -22,3 +24,54 @@ def test_threshold_is_valid_probability():
 def test_max_length_is_positive_integer():
     assert isinstance(AppConfig.MAX_LENGTH, int)
     assert AppConfig.MAX_LENGTH > 0
+
+
+@pytest.mark.parametrize(
+    ("configured_url", "expected_url"),
+    [
+        (
+            "postgres://user:password@localhost:5432/database",
+            "postgresql+psycopg://user:password@localhost:5432/database",
+        ),
+        (
+            "postgresql://user:password@localhost:5432/database",
+            "postgresql+psycopg://user:password@localhost:5432/database",
+        ),
+        (
+            "postgresql+psycopg://user:password@localhost:5432/database",
+            "postgresql+psycopg://user:password@localhost:5432/database",
+        ),
+    ],
+)
+def test_database_url_uses_psycopg_driver(
+    monkeypatch: pytest.MonkeyPatch,
+    configured_url: str,
+    expected_url: str,
+) -> None:
+    monkeypatch.setenv("DATABASE_URL", configured_url)
+
+    assert AppConfig.get_database_url() == expected_url
+
+
+def test_database_url_is_required(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+
+    with pytest.raises(RuntimeError, match="DATABASE_URL"):
+        AppConfig.get_database_url()
+
+
+def test_message_encryption_key_is_trimmed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MESSAGE_ENCRYPTION_KEY", "  test-key  ")
+
+    assert AppConfig.get_message_encryption_key() == "test-key"
+
+
+def test_message_encryption_key_is_required(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("MESSAGE_ENCRYPTION_KEY", raising=False)
+
+    with pytest.raises(RuntimeError, match="MESSAGE_ENCRYPTION_KEY"):
+        AppConfig.get_message_encryption_key()
