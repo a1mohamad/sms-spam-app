@@ -10,8 +10,10 @@ from sqlalchemy.orm import Session
 
 from app.core.config import AppConfig
 from app.core.errors import PersistenceError
+from app.db.models.prediction import Prediction
 from app.repositories.prediction_repository import PredictionRepository
 from app.security.message_cipher import MessageCipher
+from app.services.prediction_service import PredictionService
 
 
 pytestmark = [pytest.mark.integration, pytest.mark.database]
@@ -114,6 +116,50 @@ def test_repository_round_trip_uses_ciphertext_and_rolls_back(
 
     database_session.rollback()
     assert repository.get_by_id(prediction_id) is None
+
+
+def test_prediction_service_commits_encrypted_record(
+    database_engine: Engine,
+) -> None:
+    message = "Service integration test – محرمانه"
+    cipher = MessageCipher(Fernet.generate_key().decode("utf-8"))
+    prediction_id: int | None = None
+
+    try:
+        with Session(database_engine, expire_on_commit=False) as session:
+            service = PredictionService(
+                session=session,
+                repository=PredictionRepository(session),
+                message_cipher=cipher,
+            )
+
+            created = service.save_prediction(
+                message=message,
+                label="ham",
+                spam_probability=0.08,
+                threshold=0.5,
+            )
+            prediction_id = created.id
+
+        # A separate session proves that the service committed the transaction.
+        with Session(database_engine) as verification_session:
+            stored = verification_session.get(Prediction, prediction_id)
+
+            assert stored is not None
+            assert stored.label == "ham"
+            assert stored.spam_probability == pytest.approx(0.08)
+            assert stored.threshold == pytest.approx(0.5)
+            assert stored.message_length == len(message)
+            assert stored.message_ciphertext != message.encode("utf-8")
+            assert cipher.decrypt(stored.message_ciphertext) == message
+    finally:
+        # The service must commit for this test, so remove only its own row.
+        if prediction_id is not None:
+            with Session(database_engine) as cleanup_session:
+                stored = cleanup_session.get(Prediction, prediction_id)
+                if stored is not None:
+                    cleanup_session.delete(stored)
+                    cleanup_session.commit()
 
 
 @pytest.mark.parametrize(
