@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+from uuid import uuid4
 
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
@@ -30,9 +31,11 @@ def make_service() -> tuple[
 
 def test_save_prediction_encrypts_persists_and_commits() -> None:
     service, session, repository, message_cipher = make_service()
+    request_id = uuid4()
     message = "سلام"
     ciphertext = b"encrypted-message"
     expected = Prediction(
+        request_id=request_id,
         message_ciphertext=ciphertext,
         label="ham",
         spam_probability=0.1,
@@ -43,6 +46,7 @@ def test_save_prediction_encrypts_persists_and_commits() -> None:
     repository.create.return_value = expected
 
     result = service.save_prediction(
+        request_id=request_id,
         message=message,
         label="ham",
         spam_probability=0.1,
@@ -52,6 +56,7 @@ def test_save_prediction_encrypts_persists_and_commits() -> None:
     assert result is expected
     message_cipher.encrypt.assert_called_once_with(message)
     repository.create.assert_called_once_with(
+        request_id=request_id,
         message_ciphertext=ciphertext,
         label="ham",
         spam_probability=0.1,
@@ -70,6 +75,7 @@ def test_save_prediction_rolls_back_repository_failure() -> None:
 
     with pytest.raises(PersistenceError) as exc_info:
         service.save_prediction(
+            request_id=uuid4(),
             message="message",
             label="spam",
             spam_probability=0.9,
@@ -90,6 +96,7 @@ def test_save_prediction_translates_commit_failure() -> None:
 
     with pytest.raises(PersistenceError) as exc_info:
         service.save_prediction(
+            request_id=uuid4(),
             message="message",
             label="ham",
             spam_probability=0.1,
@@ -108,6 +115,7 @@ def test_save_prediction_stops_before_database_when_encryption_fails() -> None:
 
     with pytest.raises(MessageEncryptionError) as exc_info:
         service.save_prediction(
+            request_id=uuid4(),
             message="private message",
             label="ham",
             spam_probability=0.1,
