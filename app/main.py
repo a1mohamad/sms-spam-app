@@ -3,6 +3,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.core.config import AppConfig
+from app.db.session import database
+from app.security.message_cipher import MessageCipher
 from app.api.error_handlers import register_error_handlers
 from app.api.routes import router
 from app.core.startup import (
@@ -27,12 +30,24 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     predictor = create_predictor()
     warmup_predictor(predictor)
+
+    # Validate the encryption key during startup instead of failing on
+    # the first prediction request.
+    message_cipher = MessageCipher(
+        AppConfig.get_message_encryption_key()
+    )
+
     app.state.predictor = predictor
+    app.state.message_cipher = message_cipher
 
-    yield
+    try:
+        yield
+    finally:
+        del app.state.predictor
+        del app.state.message_cipher
 
-    del app.state.predictor
-
+        # Close pooled database connections during application shutdown.
+        database.dispose()
 
 def create_app() -> FastAPI:
     """Create and configure the FastAPI application.
