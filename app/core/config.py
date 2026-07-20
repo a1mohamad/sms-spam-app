@@ -90,7 +90,7 @@ class AppConfig:
         return database_url
     
     @staticmethod
-    def get_message_encrypted() -> str:
+    def get_message_encryption_key() -> str:
         """Load the message-encryption key.
 
         Returns:
