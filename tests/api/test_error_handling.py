@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
-from app.core.errors import PredictionError
+from app.core.errors import PersistenceError, PredictionError
 
 
 def test_prediction_failure_returns_safe_retryable_error(
@@ -20,6 +20,25 @@ def test_prediction_failure_returns_safe_retryable_error(
     assert response.json()["error"]["code"] == "prediction_unavailable"
     assert "sensitive" not in response.text
     assert response.json()["error"]["request_id"] == response.headers["x-request-id"]
+
+
+def test_persistence_failure_returns_safe_retryable_error(
+    error_api_client: TestClient,
+    mock_save_prediction: Mock,
+) -> None:
+    mock_save_prediction.side_effect = PersistenceError(
+        "postgresql://user:secret@database.internal/sms_spam"
+    )
+
+    response = error_api_client.post("/predict", json={"text": "hello"})
+
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "persistence_unavailable"
+    assert "secret" not in response.text
+    assert (
+        response.json()["error"]["request_id"]
+        == response.headers["x-request-id"]
+    )
 
 
 def test_unexpected_failure_returns_generic_error(
