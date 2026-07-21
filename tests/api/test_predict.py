@@ -67,3 +67,53 @@ def test_predict_rejects_whitespace_only_text_before_processing(
     assert response.status_code == 422
     mock_predictor.predict.assert_not_called()
     mock_save_prediction.assert_not_called()
+
+
+def test_predict_rejects_message_above_character_limit(
+    api_client: TestClient,
+    mock_predictor: Mock,
+    mock_save_prediction: Mock,
+) -> None:
+    """Verify oversized SMS text is rejected before processing.
+
+    Args:
+        api_client: Isolated FastAPI test client.
+        mock_predictor: Predictor double that must remain unused.
+        mock_save_prediction: Persistence double that must remain unused.
+    """
+    response = api_client.post(
+        "/predict",
+        json={"text": "a" * (AppConfig.MAX_MESSAGE_LENGTH + 1)},
+    )
+
+    assert response.status_code == 422
+    mock_predictor.predict.assert_not_called()
+    mock_save_prediction.assert_not_called()
+
+
+def test_predict_rejects_request_above_body_limit(
+    api_client: TestClient,
+    mock_predictor: Mock,
+    mock_save_prediction: Mock,
+) -> None:
+    """Verify an oversized raw body is rejected before JSON parsing.
+
+    Args:
+        api_client: Isolated FastAPI test client.
+        mock_predictor: Predictor double that must remain unused.
+        mock_save_prediction: Persistence double that must remain unused.
+    """
+    response = api_client.post(
+        "/predict",
+        content=b"x" * (AppConfig.MAX_REQUEST_BODY_BYTES + 1),
+        headers={"content-type": "application/json"},
+    )
+
+    assert response.status_code == 413
+    assert response.json()["error"]["code"] == "request_too_large"
+    assert (
+        response.json()["error"]["request_id"]
+        == response.headers["x-request-id"]
+    )
+    mock_predictor.predict.assert_not_called()
+    mock_save_prediction.assert_not_called()
