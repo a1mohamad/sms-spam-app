@@ -26,6 +26,17 @@ def test_max_length_is_positive_integer():
     assert AppConfig.MAX_LENGTH > 0
 
 
+def test_request_limits_are_positive_and_coherent():
+    """Verify request limits are positive and leave room for JSON overhead."""
+    assert AppConfig.MAX_MESSAGE_LENGTH > 0
+    assert AppConfig.MAX_REQUEST_BODY_BYTES > AppConfig.MAX_MESSAGE_LENGTH
+
+
+def test_database_connect_timeout_is_positive():
+    """Verify database connection waits have a positive upper bound."""
+    assert AppConfig.DB_CONNECT_TIMEOUT_SECONDS > 0
+
+
 @pytest.mark.parametrize(
     ("configured_url", "expected_url"),
     [
