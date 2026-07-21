@@ -7,6 +7,8 @@ x-api: &api
   environment:
     DATABASE_URL: >-
       postgresql+psycopg://${POSTGRES_USER:-sms_spam_app}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-sms_spam}
+    # Allow CI or a deployment platform to override the local .env secret.
+    MESSAGE_ENCRYPTION_KEY: ${MESSAGE_ENCRYPTION_KEY:?Set MESSAGE_ENCRYPTION_KEY in .env}
   
 
 services:
