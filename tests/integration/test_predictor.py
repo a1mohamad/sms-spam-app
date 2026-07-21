@@ -1,3 +1,5 @@
+import pytest
+
 from app.ml.predictor import SpamPredictor
 
 
@@ -27,19 +29,49 @@ def test_predictor_returns_stable_prediction_contract():
 
 
 def test_predictor_handles_ham_like_text():
+    """Verify a representative legitimate message remains classified as ham."""
     predictor = SpamPredictor()
 
     result = predictor.predict("Hey are we still meeting today")
 
     assert_valid_prediction(result)
+    assert result["label"] == "ham"
 
 
 def test_predictor_handles_spam_like_text():
+    """Verify a representative promotional message remains classified as spam."""
     predictor = SpamPredictor()
 
     result = predictor.predict("URGENT you won a free cash prize claim now")
 
     assert_valid_prediction(result)
+    assert result["label"] == "spam"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected_label"),
+    [
+        ("Can you call me when you get home", "ham"),
+        ("Reminder your appointment is tomorrow at ten", "ham"),
+        ("Congratulations claim your free prize now", "spam"),
+        ("URGENT reply now to win cash", "spam"),
+    ],
+)
+def test_predictor_preserves_expected_classification_behavior(
+    text: str,
+    expected_label: str,
+) -> None:
+    """Protect representative classifications against model regressions.
+
+    Args:
+        text: Representative SMS text passed through real inference artifacts.
+        expected_label: Classification behavior the shipped model must retain.
+    """
+    predictor = SpamPredictor()
+
+    result = predictor.predict(text)
+
+    assert result["label"] == expected_label
 
 
 def test_predictor_handles_empty_text():
