@@ -121,10 +121,32 @@ def api_message_encryption_key(
 
 
 @pytest.fixture
+def mock_database_health(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Mock:
+    """Replace the database readiness check with an observable test double.
+
+    Args:
+        monkeypatch: Pytest fixture for replacing the readiness method.
+
+    Returns:
+        Mocked connection check used by API assertions.
+    """
+    check_connection = Mock(name="check_connection")
+    monkeypatch.setattr(
+        main_module.database,
+        "check_connection",
+        check_connection,
+    )
+    return check_connection
+
+
+@pytest.fixture
 def api_client(
     monkeypatch: pytest.MonkeyPatch,
     mock_predictor: Mock,
     mock_save_prediction: Mock,
+    mock_database_health: Mock,
     api_message_encryption_key: str,
 ) -> Iterator[TestClient]:
     """Create an isolated API client with mocked runtime dependencies.
@@ -133,6 +155,7 @@ def api_client(
         monkeypatch: Pytest fixture for replacing the predictor factory.
         mock_predictor: Predictor double used by the application.
         mock_save_prediction: Mock preventing real database writes.
+        mock_database_health: Mock preventing real readiness queries.
         api_message_encryption_key: Temporary key used during startup.
 
     Yields:
@@ -157,6 +180,7 @@ def error_api_client(
     monkeypatch: pytest.MonkeyPatch,
     mock_predictor: Mock,
     mock_save_prediction: Mock,
+    mock_database_health: Mock,
     api_message_encryption_key: str,
 ) -> Iterator[TestClient]:
     """Create an isolated client that exposes handled HTTP errors.
@@ -165,6 +189,7 @@ def error_api_client(
         monkeypatch: Pytest fixture for replacing the predictor factory.
         mock_predictor: Predictor double configured by each error test.
         mock_save_prediction: Mock preventing real database writes.
+        mock_database_health: Mock configured by database-error tests.
         api_message_encryption_key: Temporary key used during startup.
 
     Yields:
