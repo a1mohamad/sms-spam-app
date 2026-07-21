@@ -25,6 +25,7 @@ def _find_available_port() -> int:
 
 
 @pytest.mark.smoke
+@pytest.mark.database
 def test_runtime_process_starts_and_reports_healthy() -> None:
     """Start Uvicorn as a real process and verify its health contract."""
     port = _find_available_port()
