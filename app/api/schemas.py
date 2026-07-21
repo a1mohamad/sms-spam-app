@@ -15,6 +15,8 @@ SmsText = Annotated[
 
 
 class PredictRequest(BaseModel):
+    """Represent a validated SMS classification request."""
+
     text: SmsText = Field(
         ...,
         description="SMS text to classify.",
@@ -22,6 +24,8 @@ class PredictRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
+    """Represent the public result returned by the classifier."""
+
     label: Literal["ham", "spam"] = Field(
         ...,
         description="Predicted SMS class.",
