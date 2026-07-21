@@ -14,6 +14,7 @@ from app.core.startup import (
     warmup_predictor,
 )
 from app.middleware.request_id import RequestIDMiddleware
+from app.middleware.request_body_limit import RequestBodyLimitMiddleware
 
 
 @asynccontextmanager
@@ -63,6 +64,12 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    # The request-ID layer remains outermost so even size-limit failures carry
+    # the same correlation ID in their response body and header.
+    application.add_middleware(
+        RequestBodyLimitMiddleware,
+        max_body_bytes=AppConfig.MAX_REQUEST_BODY_BYTES,
+    )
     application.add_middleware(RequestIDMiddleware)
     register_error_handlers(application)
     application.include_router(router)
