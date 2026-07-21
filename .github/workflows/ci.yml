@@ -140,6 +140,7 @@ jobs:
       - name: Exercise deployed API
         run: >-
           python -m pytest
+          --confcutdir=tests/smoke
           tests/smoke/test_compose_deployment.py
           -m "smoke and deployment"
 
