@@ -1,5 +1,7 @@
 FROM python:3.13-slim
 
+# Keep Python output visible in container logs and avoid storing pip's
+# download cache in the final image.
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -30,9 +32,14 @@ COPY --chown=appuser:appgroup \
 
 USER appuser
 
+# Document the default application port; deployment platforms can override
+# PORT at runtime.
 EXPOSE 8000
 
+# Check API readiness, including its PostgreSQL connection through /health.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD python -c "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.getenv('PORT', '8000') + '/health', timeout=3).close()"
 
+# Start only the API process; Compose or the deployment platform runs Alembic
+# as a separate one-off migration job.
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
