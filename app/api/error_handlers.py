@@ -111,7 +111,15 @@ async def database_unavailable_error_handler(
     request: Request,
     exc: DatabaseUnavailableError,
 ) -> JSONResponse:
-    """Handle a failed readiness check without exposing connection details."""
+    """Handle a failed readiness check without exposing connection details.
+
+    Args:
+        request: Request being processed when the database check failed.
+        exc: Application-level database availability exception to log.
+
+    Returns:
+        Retryable HTTP 503 response without database connection details.
+    """
     logger.error(
         "Database readiness check failed",
         exc_info=(type(exc), exc, exc.__traceback__),
