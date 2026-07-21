@@ -45,6 +45,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Prepare CI environment file
+        # Compose requires the local env_file to exist even when this job only
+        # validates configuration. Runtime values still come from the job env.
+        run: cp .env.example .env
+
       - name: Validate Docker Compose configuration
         run: docker compose config --quiet
 
