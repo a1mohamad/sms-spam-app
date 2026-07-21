@@ -55,6 +55,17 @@ class AppConfig:
     # Runtime inference settings.
     MAX_LENGTH: int = int(os.getenv("MAX_LENGTH", "100"))
     THRESHOLD: float = float(os.getenv("THRESHOLD", "0.5"))
+    MAX_MESSAGE_LENGTH: int = int(
+        os.getenv("MAX_MESSAGE_LENGTH", "1000")
+    )
+    MAX_REQUEST_BODY_BYTES: int = int(
+        os.getenv("MAX_REQUEST_BODY_BYTES", "16384")
+    )
+
+    # Database readiness settings.
+    DB_CONNECT_TIMEOUT_SECONDS: int = int(
+        os.getenv("DB_CONNECT_TIMEOUT_SECONDS", "3")
+    )
 
 
     @staticmethod
