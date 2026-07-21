@@ -6,7 +6,11 @@ from uuid import uuid4
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.core.errors import PersistenceError, PredictionError
+from app.core.errors import (
+    DatabaseUnavailableError,
+    PersistenceError,
+    PredictionError,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -103,6 +107,24 @@ async def persistence_error_handler(
     )
 
 
+async def database_unavailable_error_handler(
+    request: Request,
+    exc: DatabaseUnavailableError,
+) -> JSONResponse:
+    """Handle a failed readiness check without exposing connection details."""
+    logger.error(
+        "Database readiness check failed",
+        exc_info=(type(exc), exc, exc.__traceback__),
+        extra={"request_id": request.state.request_id},
+    )
+    return _error_response(
+        request,
+        status_code=503,
+        code="database_unavailable",
+        message="The database is temporarily unavailable.",
+    )
+
+
 async def unexpected_error_handler(
     request: Request,
     exc: Exception,
@@ -140,4 +162,8 @@ def register_error_handlers(app: FastAPI) -> None:
     # FastAPI selects the specific handler before falling back to Exception.
     app.add_exception_handler(PredictionError, prediction_error_handler)
     app.add_exception_handler(PersistenceError, persistence_error_handler)
+    app.add_exception_handler(
+        DatabaseUnavailableError,
+        database_unavailable_error_handler,
+    )
     app.add_exception_handler(Exception, unexpected_error_handler)
