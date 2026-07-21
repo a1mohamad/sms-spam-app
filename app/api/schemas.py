@@ -2,11 +2,14 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints
 
+from app.core.config import AppConfig
+
 SmsText = Annotated[
     str,
     StringConstraints(
         strip_whitespace=True,
         min_length=1,
+        max_length=AppConfig.MAX_MESSAGE_LENGTH,
     )
 ]
 
