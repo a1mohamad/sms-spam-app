@@ -1,9 +1,11 @@
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock
 
 import pytest
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.core.errors import DatabaseUnavailableError
 from app.db.session import Database
 
 
@@ -47,3 +49,31 @@ def test_database_dispose_closes_engine_connections() -> None:
     database.dispose()
 
     engine.dispose.assert_called_once_with()
+
+
+def test_database_health_check_executes_query() -> None:
+    """Verify readiness performs a real query on a checked-out connection."""
+    engine = Mock(spec=Engine)
+    connection_context = MagicMock()
+    engine.connect.return_value = connection_context
+    connection = connection_context.__enter__.return_value
+    database = Database.__new__(Database)
+    database._engine = engine
+
+    database.check_connection()
+
+    connection.execute.assert_called_once()
+
+
+def test_database_health_check_translates_sqlalchemy_error() -> None:
+    """Verify readiness hides SQLAlchemy connection details from callers."""
+    engine = Mock(spec=Engine)
+    engine.connect.side_effect = SQLAlchemyError("sensitive database detail")
+    database = Database.__new__(Database)
+    database._engine = engine
+
+    with pytest.raises(DatabaseUnavailableError) as exc_info:
+        database.check_connection()
+
+    assert isinstance(exc_info.value.__cause__, SQLAlchemyError)
+    assert "sensitive" not in str(exc_info.value)
