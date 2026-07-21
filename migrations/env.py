@@ -64,6 +64,10 @@ def run_migrations_online() -> None:
         database_url,
         poolclass=pool.NullPool,
         hide_parameters=True,
+        # Apply the runtime connection bound to migration commands as well.
+        connect_args={
+            "connect_timeout": AppConfig.DB_CONNECT_TIMEOUT_SECONDS,
+        },
     )
 
     with connectable.connect() as connection:
