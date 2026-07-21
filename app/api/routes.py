@@ -29,11 +29,16 @@ def root() -> dict[str, str]:
 
 @router.get("/health")
 def health_check() -> dict[str, str]:
-    """Return the API health status.
+    """Return readiness only when runtime dependencies are available.
 
     Returns:
         Dictionary containing the API health status.
+
+    Raises:
+        DatabaseUnavailableError: If PostgreSQL cannot execute a readiness
+            query.
     """
+    database.check_connection()
     return {"status": "ok"}
 
 
