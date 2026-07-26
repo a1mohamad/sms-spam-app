@@ -215,5 +215,19 @@ Run tests that do not need a live PostgreSQL database:
 python -m pytest -m "not database and not deployment"
 ```
 
+Common development and operations commands are available through the
+repository `Makefile`:
+
+```powershell
+make help
+make check
+make up
+make logs
+make down
+```
+
+`make down` preserves the local PostgreSQL volume. Run `make help` for focused
+test, migration, and model-conversion shortcuts.
+
 The full CI workflow provisions PostgreSQL, applies Alembic migrations, runs
 the test suite, builds the Docker image, and exercises the Compose deployment.
