@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: sms-spam-api
+    runtime: docker
+    plan: free
+    region: ohio
+
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+
+    # Production deploys are triggered only after Alembic succeeds.
+    autoDeployTrigger: off
+
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: MESSAGE_ENCRYPTION_KEY
+        sync: false
+      - key: THRESHOLD
+        value: "0.5"
+      - key: MAX_MESSAGE_LENGTH
+        value: "1000"
+      - key: MAX_REQUEST_BODY_BYTES
+        value: "16384"
+      - key: DB_CONNECT_TIMEOUT_SECONDS
+        value: "3"
