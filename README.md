@@ -226,6 +226,16 @@ make frontend-build
 make frontend-image
 ```
 
+Frontend unit/component tests mock the API with MSW. Playwright covers the
+desktop and mobile journeys and runs automated WCAG A/AA accessibility checks.
+
+```powershell
+make frontend-test
+make frontend-check
+npm --prefix frontend exec -- playwright install chromium
+make frontend-test-e2e
+```
+
 ## Development checks
 
 Run tests that do not need a live PostgreSQL database:
@@ -248,5 +258,5 @@ make down
 `make down` preserves the local PostgreSQL volume. Run `make help` for focused
 test, migration, and model-conversion shortcuts.
 
-The full CI workflow provisions PostgreSQL, applies Alembic migrations, runs
-the test suite, builds the Docker image, and exercises the Compose deployment.
+The full CI workflow also runs frontend unit, browser, accessibility, and build
+checks before it provisions the deployment smoke test and production deploy.
