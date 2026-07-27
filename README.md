@@ -226,6 +226,17 @@ make frontend-build
 make frontend-image
 ```
 
+The Render Blueprint provisions this image as the `sms-spam-frontend` web
+service. It uses `frontend/Dockerfile`, checks `/frontend-health`, and supplies
+the API hostname through `API_UPSTREAM`. Both Render services keep automatic
+deploys disabled; the verified GitHub CI/CD workflow triggers their deploy
+hooks after the Neon migration succeeds.
+
+After the first Blueprint sync creates the frontend service, copy its Render
+deploy hook into the GitHub Actions secret
+`RENDER_FRONTEND_DEPLOY_HOOK_URL`. The existing API hook remains in
+`RENDER_API_DEPLOY_HOOK_URL`.
+
 Frontend unit/component tests mock the API with MSW. Playwright covers the
 desktop and mobile journeys and runs automated WCAG A/AA accessibility checks.
 
