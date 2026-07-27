@@ -13,6 +13,22 @@ npm run dev
 Vite proxies `/api` to the deployed API configured by
 `VITE_DEV_API_TARGET`.
 
+## Tests
+
+Unit and component tests use Vitest, React Testing Library, and MSW. Browser
+journeys run in desktop and mobile Chromium through Playwright; the browser
+suite also checks WCAG A/AA rules with axe.
+
+```sh
+npm run test:unit
+npm run test:unit:watch
+npx playwright install chromium
+npm run test:e2e
+```
+
+The API is mocked in both suites, so frontend tests do not write to Neon or
+depend on the Render service being awake.
+
 ## Production container
 
 ```sh
