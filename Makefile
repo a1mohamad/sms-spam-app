@@ -12,7 +12,8 @@ FRONTEND_IMAGE ?= sms-spam-frontend
 	test test-unit test-api test-integration test-smoke test-local \
 	compose-config build up down logs ps postgres migrate \
 	migration-current migration-check convert-onnx validate-parity \
-	frontend-install frontend-dev frontend-build frontend-image
+	frontend-install frontend-dev frontend-build frontend-image \
+	frontend-test frontend-test-watch frontend-test-e2e frontend-check
 
 help: ## Show the available shortcuts.
 	@echo Setup
@@ -27,6 +28,10 @@ help: ## Show the available shortcuts.
 	@echo   make frontend-dev         Run the Vite development server
 	@echo   make frontend-build       Build the production frontend
 	@echo   make frontend-image       Build the React and Nginx image
+	@echo   make frontend-test        Run frontend unit and component tests
+	@echo   make frontend-test-watch  Run frontend tests in watch mode
+	@echo   make frontend-test-e2e    Run browser and accessibility tests
+	@echo   make frontend-check       Run frontend unit tests and production build
 	@echo Tests
 	@echo   make test                 Run tests without DB/deployment requirements
 	@echo   make test-unit            Run unit tests
@@ -72,6 +77,17 @@ frontend-build: ## Build the production frontend assets.
 
 frontend-image: ## Build the production React and Nginx image.
 	docker build --tag $(FRONTEND_IMAGE) frontend
+
+frontend-test: ## Run frontend unit and component tests.
+	$(NPM) --prefix frontend run test:unit
+
+frontend-test-watch: ## Run frontend unit tests in watch mode.
+	$(NPM) --prefix frontend run test:unit:watch
+
+frontend-test-e2e: ## Run Playwright browser and accessibility tests.
+	$(NPM) --prefix frontend run test:e2e
+
+frontend-check: frontend-test frontend-build ## Run frontend tests and production build.
 
 check: compose-config test ## Run the normal local validation set.
 
