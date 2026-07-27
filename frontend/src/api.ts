@@ -11,8 +11,12 @@ export type Prediction = z.infer<typeof predictionSchema> & {
   requestId: string | null;
 };
 
+function apiUrl(path: string): URL {
+  return new URL(path, window.location.origin);
+}
+
 export async function getHealth(): Promise<"ok"> {
-  const response = await fetch("/api/health", {
+  const response = await fetch(apiUrl("/api/health"), {
     headers: { Accept: "application/json" },
   });
 
@@ -24,7 +28,7 @@ export async function getHealth(): Promise<"ok"> {
 }
 
 export async function createPrediction(text: string): Promise<Prediction> {
-  const response = await fetch("/api/predict", {
+  const response = await fetch(apiUrl("/api/predict"), {
     method: "POST",
     headers: {
       Accept: "application/json",
