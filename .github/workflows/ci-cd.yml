@@ -207,7 +207,7 @@ jobs:
         run: docker compose down --volumes --remove-orphans
 
   production-deploy:
-    name: Migrate Neon and deploy Render
+    name: Migrate Neon and deploy Render services
     needs: deployment-smoke
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
@@ -235,14 +235,19 @@ jobs:
       - name: Validate deployment secrets
         env:
           DATABASE_URL: ${{ secrets.NEON_DIRECT_DATABASE_URL }}
-          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
+          RENDER_API_DEPLOY_HOOK_URL: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
+          RENDER_FRONTEND_DEPLOY_HOOK_URL: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}
         run: |
           test -n "$DATABASE_URL" || {
             echo "NEON_DIRECT_DATABASE_URL is not configured."
             exit 1
           }
-          test -n "$RENDER_DEPLOY_HOOK_URL" || {
+          test -n "$RENDER_API_DEPLOY_HOOK_URL" || {
             echo "RENDER_API_DEPLOY_HOOK_URL is not configured."
+            exit 1
+          }
+          test -n "$RENDER_FRONTEND_DEPLOY_HOOK_URL" || {
+            echo "RENDER_FRONTEND_DEPLOY_HOOK_URL is not configured."
             exit 1
           }
 
@@ -256,6 +261,17 @@ jobs:
       - name: Trigger Render API deployment
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_API_DEPLOY_HOOK_URL }}
+        run: >-
+          curl
+          --fail
+          --show-error
+          --silent
+          --request POST
+          "$RENDER_DEPLOY_HOOK_URL"
+
+      - name: Trigger Render frontend deployment
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_FRONTEND_DEPLOY_HOOK_URL }}
         run: >-
           curl
           --fail
