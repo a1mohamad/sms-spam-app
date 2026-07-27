@@ -79,9 +79,40 @@ jobs:
         run: |
           python -m pytest -m "smoke and not deployment"
 
+  frontend-tests:
+    name: Frontend tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm --prefix frontend ci
+
+      - name: Run unit and component tests
+        run: npm --prefix frontend run test:unit
+
+      - name: Build production frontend
+        run: npm --prefix frontend run build
+
+      - name: Install Playwright Chromium
+        run: npm --prefix frontend exec -- playwright install --with-deps chromium
+
+      - name: Run browser and accessibility tests
+        run: npm --prefix frontend run test:e2e
+
   deployment-smoke:
     name: Docker Compose deployment smoke
-    needs: runtime-tests
+    needs: [runtime-tests, frontend-tests]
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
