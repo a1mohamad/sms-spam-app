@@ -219,7 +219,7 @@ function App() {
         Skip to workspace
       </a>
 
-      <aside className="icon-rail" aria-label="Primary navigation">
+      <aside className="icon-rail" aria-label="Application sidebar">
         <a
           className="brand"
           href="/app"
@@ -238,7 +238,7 @@ function App() {
           </span>
         </a>
 
-        <nav className="rail-nav">
+        <nav className="rail-nav" aria-label="Primary navigation">
           {navItems.map(({ id, path, label, icon: Icon }) => (
             <a
               key={path}
@@ -316,6 +316,7 @@ function App() {
                     <button
                       type="button"
                       key={`${item.section}-${item.id}`}
+                      aria-label={`${item.title}, ${navItems.find((navItem) => navItem.id === item.section)?.label}`}
                       onClick={() => selectSearchResult(item)}
                     >
                       <span>{item.title}</span>
@@ -747,7 +748,11 @@ function ApiView({
           </button>
         </form>
 
-        <section className={`result-card surface-card ${result ? result.label : "empty"}`} aria-live="polite">
+        <section
+          className={`result-card surface-card ${result ? result.label : "empty"}`}
+          aria-label="Prediction result"
+          aria-live="polite"
+        >
           {result ? (
             <>
               <div className="result-heading">
@@ -961,7 +966,13 @@ function DetailPanel({
           </ul>
         </div>
 
-        <a className="detail-source" href={source.href} target="_blank" rel="noreferrer">
+        <a
+          className="detail-source"
+          href={source.href}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={`Source of truth: ${source.label}`}
+        >
           <Server size={16} />
           <span><strong>Source of truth</strong>{source.label}</span>
           <ExternalLink size={14} />
