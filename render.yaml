@@ -25,3 +25,21 @@ services:
         value: "16384"
       - key: DB_CONNECT_TIMEOUT_SECONDS
         value: "3"
+
+  - type: web
+    name: sms-spam-frontend
+    runtime: docker
+    plan: free
+    region: ohio
+
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /frontend-health
+
+    # GitHub Actions triggers this only after frontend and deployment checks pass.
+    autoDeployTrigger: off
+
+    envVars:
+      # Hostname only: Nginx adds HTTPS when proxying /api/* requests.
+      - key: API_UPSTREAM
+        value: sms-spam-api-gou5.onrender.com
