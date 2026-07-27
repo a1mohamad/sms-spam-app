@@ -207,6 +207,25 @@ The exact probability depends on the model.
 - **Startup health check fails too early:** increase the initial delay or
   failure threshold to give ONNX Runtime time to load and warm the model.
 
+## Frontend prototype
+
+The `frontend` directory contains the SMS Spam Classifier React and TypeScript
+prototype. It includes responsive dataset, training, and live API workspaces.
+
+```powershell
+make frontend-install
+make frontend-dev
+```
+
+The production frontend uses a multi-stage Docker image: Vite builds the React
+application and Nginx serves it on port 8080. Nginx also proxies `/api/*` to the
+deployed FastAPI service, avoiding browser cross-origin configuration.
+
+```powershell
+make frontend-build
+make frontend-image
+```
+
 ## Development checks
 
 Run tests that do not need a live PostgreSQL database:
