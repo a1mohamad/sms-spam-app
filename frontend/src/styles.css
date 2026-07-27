@@ -136,7 +136,7 @@ textarea:focus-visible {
   --border-soft: rgba(27, 30, 31, 0.12);
   --text: #1b1e1f;
   --text-soft: #3f4547;
-  --muted: #697174;
+  --muted: #626a6d;
   --primary: #b64d2a;
   --cyan: #2f709e;
   --mint: #287a58;
@@ -587,7 +587,7 @@ textarea:focus-visible {
 }
 
 .health-pill.online {
-  color: #89ebc9;
+  color: var(--mint);
   border-color: rgba(59, 214, 160, 0.22);
 }
 
@@ -1230,7 +1230,7 @@ textarea:focus-visible {
 }
 
 .privacy-chip {
-  color: #8ee9c8;
+  color: var(--mint);
   background: rgba(59, 214, 160, 0.07);
   border-color: rgba(59, 214, 160, 0.16);
 }
