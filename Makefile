@@ -4,12 +4,15 @@ PYTHON ?= python
 PIP := $(PYTHON) -m pip
 PYTEST := $(PYTHON) -m pytest
 COMPOSE ?= docker compose
+NPM ?= npm
 API_PORT ?= 8000
+FRONTEND_IMAGE ?= sms-spam-frontend
 
 .PHONY: help install install-dev install-convert run check \
 	test test-unit test-api test-integration test-smoke test-local \
 	compose-config build up down logs ps postgres migrate \
-	migration-current migration-check convert-onnx validate-parity
+	migration-current migration-check convert-onnx validate-parity \
+	frontend-install frontend-dev frontend-build frontend-image
 
 help: ## Show the available shortcuts.
 	@echo Setup
@@ -19,6 +22,11 @@ help: ## Show the available shortcuts.
 	@echo Development
 	@echo   make run                  Run the API locally with reload
 	@echo   make check                Validate Compose and run safe tests
+	@echo Frontend
+	@echo   make frontend-install     Install React dependencies
+	@echo   make frontend-dev         Run the Vite development server
+	@echo   make frontend-build       Build the production frontend
+	@echo   make frontend-image       Build the React and Nginx image
 	@echo Tests
 	@echo   make test                 Run tests without DB/deployment requirements
 	@echo   make test-unit            Run unit tests
@@ -52,6 +60,18 @@ install-convert: ## Install model-conversion dependencies.
 
 run: ## Run the API locally with auto-reload.
 	$(PYTHON) -m uvicorn app.main:app --reload --port $(API_PORT)
+
+frontend-install: ## Install React frontend dependencies.
+	$(NPM) --prefix frontend install
+
+frontend-dev: ## Run the Vite frontend development server.
+	$(NPM) --prefix frontend run dev
+
+frontend-build: ## Build the production frontend assets.
+	$(NPM) --prefix frontend run build
+
+frontend-image: ## Build the production React and Nginx image.
+	docker build --tag $(FRONTEND_IMAGE) frontend
 
 check: compose-config test ## Run the normal local validation set.
 
